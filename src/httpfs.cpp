@@ -203,6 +203,23 @@ unique_ptr<HTTPResponse> HTTPFileSystem::GetRequest(FileHandle &handle, string u
 			    }
 			    throw HTTPException(error);
 		    }
+	    	handle.metadata = make_uniq<FileHandleMetadata>();
+
+	    	// TODO: add setting for this
+	    	if (handle.metadata) {
+	    		vector<Value> keys;
+	    		vector<Value> values;
+	    		for (const auto &kv : response.headers) {
+	    			keys.push_back(kv.first);
+	    			values.push_back(kv.second);
+	    		}
+	    		handle.metadata->values_map["response_http_headers"] = Value::MAP(LogicalType::VARCHAR, LogicalType::ANY, keys, values);
+
+	    		if (response.HasHeader("link")) {
+					handle.metadata->values_map["link_header"] = Value(response.GetHeaderValue("link"));
+				}
+	    	}
+
 		    return true;
 	    },
 	    [&](const_data_ptr_t data, idx_t data_length) {
